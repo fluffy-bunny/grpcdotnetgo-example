@@ -6,7 +6,9 @@ require (
 	github.com/cheekybits/genny v1.0.0
 	github.com/fluffy-bunny/grpcdotnetgo v0.1.199
 	github.com/fluffy-bunny/sarulabsdi v0.1.56
+	github.com/gogo/googleapis v1.4.1
 	github.com/gogo/protobuf v1.3.2
+	github.com/gogo/status v1.1.0
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.1.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
@@ -27,8 +29,6 @@ require (
 	github.com/form3tech-oss/jwt-go v3.2.5+incompatible // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/goccy/go-json v0.9.4 // indirect
-	github.com/gogo/googleapis v1.4.1 // indirect
-	github.com/gogo/status v1.1.0 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
