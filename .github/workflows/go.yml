@@ -110,7 +110,12 @@ jobs:
     - name: Build
       run: |
         go build -mod=mod -v -a -tags netgo -ldflags "-X 'main.version=${{ steps.tag_version.outputs.new_tag }}' -extldflags '-static'" ./cmd/server
-       
+    
+    - uses: actions/upload-artifact@v2
+      with:
+        name: build
+        path: ./${{ env.BINARY }}    
+        
     # https://github.com/actions/runner/issues/1353
     # -coverpkg not working in this project, but it does work elsewhere
     #    go test -v ./... -cover -short -coverpkg=./... -coverprofile=coverage/cov.out -json > coverage/report.json
