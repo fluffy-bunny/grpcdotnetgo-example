@@ -139,4 +139,22 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          
+
+
+  release:
+    needs: [pre_flight,build]
+    runs-on: ubuntu-latest
+
+    steps:
+    - run: |
+        echo new_tag: ${{needs.pre_flight.outputs.new_tag}} 
+        echo changelog: ${{needs.pre_flight.outputs.changelog}}
+    
+    - name: Create a GitHub release
+      uses: actions/create-release@v1
+      env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+          tag_name: ${{needs.pre_flight.outputs.new_tag}}
+          release_name: Release ${{needs.pre_flight.outputs.new_tag}} 
+          body:  ${{needs.pre_flight.outputs.changelog}}
