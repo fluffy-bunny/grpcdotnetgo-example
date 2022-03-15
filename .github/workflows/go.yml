@@ -219,7 +219,8 @@ jobs:
         id: docker_build
         uses: docker/build-push-action@v2
         with:
-          file: build/Dockerfile
+          context: ./build
+          file: ./build/Dockerfile
           push: true
           tags: ghstahl/fluffybunny-grpcdotnetgo-example:${{needs.pre_flight.outputs.new_tag}} ,ghstahl/fluffybunny-grpcdotnetgo-example:latest
 
