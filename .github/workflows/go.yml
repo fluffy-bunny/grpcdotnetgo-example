@@ -28,10 +28,27 @@ jobs:
       uses: mathieudutour/github-tag-action@v6.0
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        
+
+  # Lint check, using https://github.com/mgechev/revive
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+
+      - name: Run Revive Action by building from repository
+        uses: morphy2k/revive-action@v2
+        with:
+          config: ./revive.toml
+          name: "Linter"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}   # GitHub token for annotations
+    
   build:
     runs-on: ubuntu-latest
-    needs: [pre_flight]
+    needs: [pre_flight, lint]
     steps:
     - uses: actions/checkout@v2
 
@@ -141,8 +158,67 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
 
+  
+
+  # Create and post docker image
+  build-docker-push-image:
+    runs-on: ubuntu-latest
+    needs: [lint, build ]
+
+    steps:
+      - run: |
+         echo new_tag: ${{needs.pre_flight.outputs.new_tag}} 
+         echo changelog: ${{needs.pre_flight.outputs.changelog}}
+
+      - uses: actions/checkout@v2.3.4
+        with:
+          submodules: true
+
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: build
+          path: build
+
+      # If we ever have more than 1 file, tar before actions/upload-artifact
+      - name: Fix Execute Bit
+        run: chmod +x build/${{ env.BINARY }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v1
+        with:
+          install: true
+      - name: Inspect builder
+        run: |
+            echo "Name:      ${{ steps.buildx.outputs.name }}"
+            echo "Endpoint:  ${{ steps.buildx.outputs.endpoint }}"
+            echo "Status:    ${{ steps.buildx.outputs.status }}"
+            echo "Flags:     ${{ steps.buildx.outputs.flags }}"
+            echo "Platforms: ${{ steps.buildx.outputs.platforms }}"
+      - name: Login to DockerHub
+        uses: docker/login-action@v1 
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      - name: Build and push docker_build
+        id: docker_build
+        uses: docker/build-push-action@v2
+        with:
+          file: Dockerfile
+          push: true
+          tags: ghstahl/fluffybunny-grpcdotnetgo-example:${{ steps.tag_version.outputs.new_tag }},ghstahl/fluffybunny-grpcdotnetgo-example:latest
+
+
+      - name: Image digest docker_build
+        run: echo ${{ steps.docker_build.outputs.digest }}
+ 
   release:
-    needs: [pre_flight,build]
+    needs: [pre_flight,build-docker-push-image]
     runs-on: ubuntu-latest
 
     steps:
