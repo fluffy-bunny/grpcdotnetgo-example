@@ -190,6 +190,10 @@ jobs:
       - name: Fix Execute Bit
         run: chmod +x build/${{ env.BINARY }}
 
+      - name: ls build dir
+        run: |
+         ls build/ 
+          
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
 
