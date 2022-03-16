@@ -1,10 +1,10 @@
 module github.com/fluffy-bunny/grpcdotnetgo-example
 
-go 1.17
+go 1.18
 
 require (
 	github.com/cheekybits/genny v1.0.0
-	github.com/fluffy-bunny/grpcdotnetgo v0.1.199
+	github.com/fluffy-bunny/grpcdotnetgo v0.1.208
 	github.com/fluffy-bunny/sarulabsdi v0.1.56
 	github.com/gogo/googleapis v1.4.1
 	github.com/gogo/protobuf v1.3.2

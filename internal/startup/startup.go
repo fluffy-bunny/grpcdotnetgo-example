@@ -87,7 +87,7 @@ func (s *Startup) ConfigureServices(builder *di.Builder) {
 	// this is how  you get your config before you register your services
 	config := s.ConfigOptions.Destination.(*contracts_config.Config)
 
-	var mm = make(map[string]middleware_oidc.EntryPointConfig)
+	var mm = make(map[string]*middleware_oidc.EntryPointConfig)
 
 	for k, v := range config.Example.OIDCConfig.EntryPoints {
 		mm[k] = v
@@ -135,15 +135,15 @@ func (s *Startup) Configure(unaryServerInterceptorBuilder contracts_core.IUnaryS
 
 		for _, vv := range v.ClaimsConfig.AND {
 			methodClaims.AND = append(methodClaims.AND, contracts_claimsprincipal.Claim{
-				Type:  vv.Type,
-				Value: vv.Value,
+				Type:  vv.Claim.Type,
+				Value: vv.Claim.Value,
 			})
 		}
 
 		for _, vv := range v.ClaimsConfig.OR {
 			methodClaims.OR = append(methodClaims.OR, contracts_claimsprincipal.Claim{
-				Type:  vv.Type,
-				Value: vv.Value,
+				Type:  vv.Claim.Type,
+				Value: vv.Claim.Value,
 			})
 		}
 
