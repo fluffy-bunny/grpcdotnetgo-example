@@ -6,7 +6,10 @@ import (
 	"path/filepath"
 
 	contracts_config "github.com/fluffy-bunny/grpcdotnetgo-example/internal/contracts/config"
+	"github.com/fluffy-bunny/grpcdotnetgo-example/internal/development"
 	pb "github.com/fluffy-bunny/grpcdotnetgo-example/internal/grpcContracts/helloworld"
+	middleware_entrypoint_authorization "github.com/fluffy-bunny/grpcdotnetgo-example/internal/middleware/entrypoint_authorization"
+	middleware_metadatafilter "github.com/fluffy-bunny/grpcdotnetgo-example/internal/middleware/metadatafilter"
 	background_CounterService "github.com/fluffy-bunny/grpcdotnetgo-example/internal/services/background/cron/counter"
 	background_WelcomeService "github.com/fluffy-bunny/grpcdotnetgo-example/internal/services/background/onetime/welcome"
 	services_health "github.com/fluffy-bunny/grpcdotnetgo-example/internal/services/health"
@@ -16,14 +19,20 @@ import (
 	services_singleton "github.com/fluffy-bunny/grpcdotnetgo-example/internal/services/singleton"
 	services_transient "github.com/fluffy-bunny/grpcdotnetgo-example/internal/services/transient"
 	"github.com/fluffy-bunny/grpcdotnetgo/pkg/auth/oauth2"
+	contracts_auth "github.com/fluffy-bunny/grpcdotnetgo/pkg/contracts/auth"
 	contracts_claimsprincipal "github.com/fluffy-bunny/grpcdotnetgo/pkg/contracts/claimsprincipal"
 	contracts_core "github.com/fluffy-bunny/grpcdotnetgo/pkg/contracts/core"
+	contracts_core_metadatafilter "github.com/fluffy-bunny/grpcdotnetgo/pkg/contracts/metadatafilter"
+	middleware_claimsprincipal "github.com/fluffy-bunny/grpcdotnetgo/pkg/middleware/claimsprincipal"
 	middleware_dicontext "github.com/fluffy-bunny/grpcdotnetgo/pkg/middleware/dicontext/middleware"
 	middleware_logger "github.com/fluffy-bunny/grpcdotnetgo/pkg/middleware/logger"
 	middleware_oidc "github.com/fluffy-bunny/grpcdotnetgo/pkg/middleware/oidc"
 	middleware_grpc_recovery "github.com/fluffy-bunny/grpcdotnetgo/pkg/middleware/recovery"
 	grpcDIProtoError "github.com/fluffy-bunny/grpcdotnetgo/pkg/proto/error"
+	services_auth "github.com/fluffy-bunny/grpcdotnetgo/pkg/services/auth/inmemory"
+	services_core_metadatafilter "github.com/fluffy-bunny/grpcdotnetgo/pkg/services/metadatafilter"
 	mockoidcservice "github.com/fluffy-bunny/grpcdotnetgo/pkg/services/test/mockoidcservice"
+	core_wellknown "github.com/fluffy-bunny/grpcdotnetgo/pkg/wellknown"
 	di "github.com/fluffy-bunny/sarulabsdi"
 	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	_ "github.com/jnewmano/grpc-json-proxy/codec" // justified
@@ -111,6 +120,14 @@ func (s *Startup) ConfigureServices(builder *di.Builder) {
 	background_CounterService.AddCronCounterJobProvider(builder)
 	background_WelcomeService.AddOneTimeWelcomeJobProvider(builder)
 
+	if config.ClaimsPrincipalMiddleware == "development" {
+		services_auth.AddSingletonIModularAuthMiddleware(builder, development.BuildValidClaimsPrincipalMap())
+	} else {
+		// TODO: Put your production IModularAuthMiddleware middleware here
+	}
+	// add our metadata filter middleware service
+	services_core_metadatafilter.AddSingletonIMetadataFilterMiddleware(builder, core_wellknown.MetaDataFilterSet, middleware_metadatafilter.BuildMetadataFilterConfig())
+
 	mockoidcservice.AddMockOIDCService(builder)
 
 	middleware_oidc.AddOIDCConfigAccessor(builder, config)
@@ -149,10 +166,6 @@ func (s *Startup) Configure(unaryServerInterceptorBuilder contracts_core.IUnaryS
 
 		grpcFuncAuthConfig.FullMethodNameToClaims[v.FullMethodName] = methodClaims
 	}
-	oidcContext, err := oauth2.BuildOpenIdConnectContext(grpcFuncAuthConfig)
-	if err != nil {
-		panic(err)
-	}
 
 	//var recoveryFunc middleware_grpc_recovery.RecoveryHandlerFunc
 	recoveryOpts := []middleware_grpc_recovery.Option{
@@ -164,11 +177,26 @@ func (s *Startup) Configure(unaryServerInterceptorBuilder contracts_core.IUnaryS
 	unaryServerInterceptorBuilder.Use(middleware_dicontext.UnaryServerInterceptor(s.RootContainer))
 	unaryServerInterceptorBuilder.Use(middleware_logger.LoggingUnaryServerInterceptor())
 
-	//	authHandler := middleware_grpc_auth.GetAuthFuncAccessorFromContainer(serviceProvider.GetContainer())
-	//	unaryServerInterceptorBuilder.Use(middleware_grpc_auth.UnaryServerInterceptor(authHandler))
+	// Metadatafilter middleware
+	// MUST BE BEFORE ANY AUTH MIDDLEWARE AND BEFPRE DIContext middleware
+	metadatafilter := contracts_core_metadatafilter.GetIMetadataFilterMiddlewareFromContainer(s.RootContainer)
+	unaryServerInterceptorBuilder.Use(metadatafilter.GetUnaryServerInterceptor())
 
-	unaryServerInterceptorBuilder.Use(oauth2.OAuth2UnaryServerInterceptor(oidcContext))
-	unaryServerInterceptorBuilder.Use(oauth2.FinalAuthVerificationMiddleware(s.RootContainer))
+	modularAuthMiddleware := contracts_auth.GetIModularAuthMiddlewareFromContainer(s.RootContainer)
+	unaryServerInterceptorBuilder.Use(modularAuthMiddleware.GetUnaryServerInterceptor())
+
+	/*
+		oidcContext, err := oauth2.BuildOpenIdConnectContext(grpcFuncAuthConfig)
+		if err != nil {
+			panic(err)
+		}
+		unaryServerInterceptorBuilder.Use(oauth2.OAuth2UnaryServerInterceptor(oidcContext))
+	*/
+
+	// final auth only works against the claims principal
+	// Here the gating happens
+	grpcEntrypointClaimsMap := middleware_entrypoint_authorization.BuildGrpcEntrypointPermissionsClaimsMap()
+	unaryServerInterceptorBuilder.Use(middleware_claimsprincipal.FinalAuthVerificationMiddlewareUsingClaimsMapWithZeroTrust(grpcEntrypointClaimsMap))
 
 	unaryServerInterceptorBuilder.Use(middleware_grpc_recovery.UnaryServerInterceptor(recoveryOpts...))
 

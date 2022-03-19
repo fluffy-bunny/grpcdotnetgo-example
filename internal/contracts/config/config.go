@@ -14,8 +14,9 @@ type ExampleConfig struct {
 
 // Config type
 type Config struct {
-	Environment string        `mapstructure:"APPLICATION_ENVIRONMENT"`
-	Example     ExampleConfig `mapstructure:"EXAMPLE"`
+	ApplicationEnvironment    string        `json:"applicationEnvironment" mapstructure:"APPLICATION_ENVIRONMENT"`
+	Example                   ExampleConfig `json:"example" mapstructure:"EXAMPLE"`
+	ClaimsPrincipalMiddleware string        `json:"claimsPrincipalMiddleware" mapstructure:"CLAIMS_PRINCIPAL_MIDDLEWARE"`
 }
 
 // GetOIDCConfig gets config
@@ -27,6 +28,7 @@ func (c *Config) GetOIDCConfig() oidc.IOIDCConfig {
 var ConfigDefaultJSON = []byte(`
 {
 	"APPLICATION_ENVIRONMENT": "in-environment",
+	"CLAIMS_PRINCIPAL_MIDDLEWARE": "development",
 	"EXAMPLE": {
 	  "ENABLE_TRANSIENT_2": true,
 	  "PORT": 1111,

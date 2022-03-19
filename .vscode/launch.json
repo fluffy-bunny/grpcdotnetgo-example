@@ -21,9 +21,9 @@
             "env": {
                 "APPLICATION_ENVIRONMENT":"Development",
                 "MODE":"ddd",
-                "GRPC_PORT": 1111,
+                "GRPC_PORT": "1111",
                 //"OIDC_CONFIG__AUTHORITY": "https://some.oidc.authority/",
-                "ENABLE_TRANSIENT_2": false               
+                "ENABLE_TRANSIENT_2": "false"               
             } 
         },
         {
@@ -35,9 +35,9 @@
             "env": {
                 "APPLICATION_ENVIRONMENT":"Development",
                 "MODE":"ddd",
-                "EXAMPLE__PORT": 1111,
+                "EXAMPLE__PORT": "1111",
                 //"OIDC_CONFIG__AUTHORITY": "https://some.oidc.authority/",
-                "ENABLE_TRANSIENT_2": false               
+                "ENABLE_TRANSIENT_2": "false"               
             }
         },
         {
@@ -49,9 +49,9 @@
             "env": {
                 "APPLICATION_ENVIRONMENT":"Development",
                 "MODE":"ddd",
-                "EXAMPLE__PORT": 1111,
+                "EXAMPLE__PORT": "1111",
                 //"OIDC_CONFIG__AUTHORITY": "https://some.oidc.authority/",
-                "ENABLE_TRANSIENT_2": false               
+                "ENABLE_TRANSIENT_2": "false"               
             },
             "args": ["serve", "-e=EXAMPLE__PORT=5105" ]
         },
