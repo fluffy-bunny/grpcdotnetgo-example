@@ -1,0 +1,63 @@
+version: "3.8"
+
+services:
+
+ # grpcdotnetgo-example
+  grpcdotnetgo-example:
+    image: "${GRPCDOTNETGO_EXAMPLE_IMAGE_NAME}:${GRPCDOTNETGO_EXAMPLE_VERSION}"
+    container_name: "${CONTAINER_PRE}${GRPCDOTNETGO_EXAMPLE_NAME}"
+    networks:
+      - grpcdotnetgo
+    ports:
+      - 0.0.0.0:${GRPCDOTNETGO_EXAMPLE_PORT}:${GRPCDOTNETGO_EXAMPLE_PORT}
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${CONTAINER_LOG_SIZE}"
+        max-file: "${CONTAINER_LOG_COUNT}"
+    environment:
+      APPLICATION_ENVIRONMENT: "${APPLICATION_ENVIRONMENT}"
+      EXAMPLE__PORT: "${GRPCDOTNETGO_EXAMPLE_PORT}"
+      LOG_LEVEL: "${GRPCDOTNETGO_EXAMPLE_LOG_LEVEL}"
+      PRETTY_LOG: "${GRPCDOTNETGO_EXAMPLE_PRETTY_LOG}"
+  
+    depends_on:
+      - mongodb
+      - redis
+   
+    entrypoint: ["/app/server", "serve"]
+
+  # MongoDB, used by connector-functions and most microservices
+  # NOTE: "In production we will use Mongo Atlas (in Azure) instead of CosmosDB, since CosmosDB"
+  #       is stuck at Mongo 3.6, which means no $regexMatch, no indexes, and a bunch of other stuff
+  mongodb:
+    image: "bitnami/mongodb:4.2.11-debian-10-r20"
+    container_name: "${CONTAINER_PRE}mongodb"
+    ports:
+      - 27017:27017
+    volumes:
+      - mongodb-data:/bitnami/mongodb
+    networks:
+      - grpcdotnetgo
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+  redis:
+    image: redis:6.2-alpine
+    container_name: "${CONTAINER_PRE}redis"
+
+    restart: always
+    ports:
+      - '6379:6379'
+    command: redis-server --save 20 1 --loglevel warning --requirepass eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81
+    volumes: 
+      - redis:/data
+    networks:
+      - grpcdotnetgo      
+
+networks:
+  grpcdotnetgo:
+
+volumes:
+  mongodb-data:
+  redis:
+    driver: local
