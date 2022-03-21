@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/cheekybits/genny v1.0.0
-	github.com/fluffy-bunny/grpcdotnetgo v0.1.208
+	github.com/fluffy-bunny/grpcdotnetgo v0.1.212
 	github.com/fluffy-bunny/sarulabsdi v0.1.56
 	github.com/gogo/googleapis v1.4.1
 	github.com/gogo/protobuf v1.3.2
@@ -71,4 +71,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
 
-replace github.com/fluffy-bunny/grpcdotnetgo => ../grpcdotnetgo
+//replace github.com/fluffy-bunny/grpcdotnetgo => ../grpcdotnetgo
