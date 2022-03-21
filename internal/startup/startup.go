@@ -29,7 +29,7 @@ import (
 	middleware_oidc "github.com/fluffy-bunny/grpcdotnetgo/pkg/middleware/oidc"
 	middleware_grpc_recovery "github.com/fluffy-bunny/grpcdotnetgo/pkg/middleware/recovery"
 	grpcDIProtoError "github.com/fluffy-bunny/grpcdotnetgo/pkg/proto/error"
-	services_auth "github.com/fluffy-bunny/grpcdotnetgo/pkg/services/auth/inmemory"
+	services_auth_inmemory "github.com/fluffy-bunny/grpcdotnetgo/pkg/services/auth/inmemory"
 	services_core_metadatafilter "github.com/fluffy-bunny/grpcdotnetgo/pkg/services/metadatafilter"
 	mockoidcservice "github.com/fluffy-bunny/grpcdotnetgo/pkg/services/test/mockoidcservice"
 	core_wellknown "github.com/fluffy-bunny/grpcdotnetgo/pkg/wellknown"
@@ -121,7 +121,7 @@ func (s *Startup) ConfigureServices(builder *di.Builder) {
 	background_WelcomeService.AddOneTimeWelcomeJobProvider(builder)
 
 	if config.ClaimsPrincipalMiddleware == "development" {
-		services_auth.AddSingletonIModularAuthMiddleware(builder, development.BuildValidClaimsPrincipalMap())
+		services_auth_inmemory.AddSingletonIModularAuthMiddleware(builder, development.BuildValidClaimsPrincipalMap())
 	} else {
 		// TODO: Put your production IModularAuthMiddleware middleware here
 	}
